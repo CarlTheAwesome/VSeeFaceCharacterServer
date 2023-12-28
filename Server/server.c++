@@ -28,27 +28,20 @@ void processVSeeFaceData(const json& data) {
     // Perform image processing with CImg (modify as needed)
     image.blur(2.5);
 
-    // Save the processed image
-    image.save("./processed_image.jpg");
+    // Save the processed image in the current directory
+    image.save("processed_image.jpg");
 }
 
-void serveHTML(server& WebSocketServer, websocketpp::connection_hdl hdl) {
-    std::ifstream file("./index.html", std::ios::binary);
+void serveHTML(websocketpp::connection_hdl hdl) {
+    std::ifstream file("index.html", std::ios::binary);
 
     if (file.is_open()) {
         std::string htmlContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         file.close();
 
-        websocketpp::http::response<websocketpp::http::string_body> res;
-        res.set_body(htmlContent);
-        res.set_status(200);
-
-        WebSocketServer.send(hdl, res);
+        WebSocketServer.send(hdl, htmlContent, websocketpp::frame::opcode::TEXT);
     } else {
-        websocketpp::http::response<websocketpp::http::string_body> res;
-        res.set_status(404);
-
-        WebSocketServer.send(hdl, res);
+        WebSocketServer.send(hdl, "HTTP/1.1 404 Not Found\r\n\r\n", websocketpp::frame::opcode::TEXT);
     }
 }
 
@@ -74,7 +67,7 @@ int main() {
         WebSocketServer.send(hdl, "Received your message", msg->get_opcode());
     });
 
-    WebSocketServer.set_http_handler(&serveHTML);
+    WebSocketServer.set_http_handler(std::bind(&serveHTML, std::placeholders::_1));
 
     WebSocketServer.listen(9002);
     WebSocketServer.start_accept();
