@@ -10,10 +10,12 @@
 using json = nlohmann::json;
 typedef websocketpp::server<websocketpp::config::asio> server;
 
+server WebSocketServer;
+
 void processVSeeFaceData(const json& data) {
     std::string characterName = data["character"]["name"];
     std::string imageData = data["character"]["imageData"];
-    
+
     std::cout << "Character Name: " << characterName << std::endl;
 
     // Decode base64 image data
@@ -24,7 +26,7 @@ void processVSeeFaceData(const json& data) {
     cimg_forX(rawData, i) rawData(i) = static_cast<unsigned char>(imageData[i]);
 
     image = rawData;
-    
+
     // Perform image processing with CImg (modify as needed)
     image.blur(2.5);
 
@@ -46,8 +48,6 @@ void serveHTML(websocketpp::connection_hdl hdl) {
 }
 
 int main() {
-    server WebSocketServer;
-
     WebSocketServer.init_asio();
 
     WebSocketServer.set_message_handler([&](websocketpp::connection_hdl hdl, server::message_ptr msg) {
